@@ -1,8 +1,6 @@
 import Box from "@mui/material/Box";
 import Stepper from "./components/stepperForm/Stepper";
 
-const steps = ["Step 1", "Step 2"];
-
 function App() {
   return (
     <Box
@@ -12,7 +10,7 @@ function App() {
         justifyContent: "center",
         height: "100%",
       }}>
-      <Stepper steps={steps} />
+      <Stepper />
     </Box>
   );
 }

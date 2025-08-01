@@ -1,91 +1,91 @@
-import { useState, Fragment } from "react";
+import { useState } from "react";
 import {
   Box,
   Button,
   Stepper as MuiStepper,
   Step,
   StepLabel,
-  Typography,
 } from "@mui/material";
-import { useForm } from "@tanstack/react-form";
+import { useAppForm } from "../../hooks/form";
+import { StepOne } from "./steps/StepOne";
+import { StepTwo } from "./steps/StepTwo";
+import { stepperSchema } from "../../schemas/stepperSchema";
 
-const Stepper = ({ steps }: { steps: string[] }) => {
+const steps = ["stepOne", "stepTwo"] as const;
+
+const Stepper = () => {
   const [activeStep, setActiveStep] = useState(0);
 
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: {
-      firstName: "",
-      lastName: "",
+      stepOne: { phone: "", fullName: "" },
+      stepTwo: { email: "", zip: "" },
     },
-    validators: {
-      // DEMO: You can switch between schemas seamlessly
-      //   onChange: ZodSchema,
-      // onChange: ValibotSchema,
-      // onChange: ArkTypeSchema,
-      // onChange: EffectSchema,
-    },
-    onSubmit: async ({ value }) => {
-      // Do something with form data
-      console.log(value);
+    validators: { onChange: stepperSchema },
+    onSubmit: ({ value }) => {
+      console.log("Submitted:", value);
     },
   });
 
+  const currentStepKey = steps[activeStep];
+
   const handleNext = () => {
-    setActiveStep((prev) => prev + 1);
+    if (activeStep < steps.length - 1) {
+      setActiveStep((prev) => prev + 1);
+    }
   };
 
   const handleBack = () => {
-    setActiveStep((prev) => prev - 1);
-  };
-
-  const handleReset = () => {
-    setActiveStep(0);
+    if (activeStep > 0) {
+      setActiveStep((prev) => prev - 1);
+    }
   };
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        e.stopPropagation();
         form.handleSubmit();
       }}>
-      <Box sx={{ width: "80%" }}>
+      <Box sx={{ width: "80%", mt: 4 }}>
         <MuiStepper activeStep={activeStep}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
+          {steps.map((step, index) => (
+            <Step key={step}>
+              <StepLabel>{`Step ${index + 1}`}</StepLabel>
             </Step>
           ))}
         </MuiStepper>
 
-        {activeStep === steps.length ? (
-          <Fragment>
-            <Typography sx={{ mt: 2, mb: 1 }}>
-              All steps completed - you're finished
-            </Typography>
-            <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
-              <Box sx={{ flex: "1 1 auto" }} />
-              <Button onClick={handleReset}>Reset</Button>
-            </Box>
-          </Fragment>
-        ) : (
-          <Fragment>
-            <Typography sx={{ mt: 2, mb: 1 }}>Step {activeStep + 1}</Typography>
-            <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
-              <Button
-                color="inherit"
-                disabled={activeStep === 0}
-                onClick={handleBack}
-                sx={{ mr: 1 }}>
-                Back
-              </Button>
-              <Box sx={{ flex: "1 1 auto" }} />
-              <Button onClick={handleNext}>
-                {activeStep === steps.length - 1 ? "Finish" : "Next"}
-              </Button>
-            </Box>
-          </Fragment>
+        {currentStepKey === "stepOne" && (
+          <StepOne form={form} fields="stepOne" />
         )}
+        {currentStepKey === "stepTwo" && (
+          <StepTwo form={form} fields="stepTwo" />
+        )}
+
+        <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
+          <Button
+            color="inherit"
+            disabled={activeStep === 0}
+            onClick={handleBack}
+            sx={{ mr: 1 }}>
+            Back
+          </Button>
+          <Box sx={{ flex: "1 1 auto" }} />
+          {activeStep < steps.length - 1 && (
+            <Button onClick={handleNext}>Next</Button>
+          )}
+
+          {activeStep === steps.length - 1 && (
+            <form.Subscribe selector={(state) => state.isSubmitting}>
+              {(isSubmitting) => (
+                <Button disabled={isSubmitting} type="submit">
+                  Submit
+                </Button>
+              )}
+            </form.Subscribe>
+          )}
+        </Box>
       </Box>
     </form>
   );
