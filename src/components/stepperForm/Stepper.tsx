@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import {
   Box,
   Button,
@@ -6,20 +7,20 @@ import {
   Step,
   StepLabel,
 } from "@mui/material";
+
 import { useAppForm } from "../../hooks/form";
 import { StepOne } from "./steps/StepOne";
 import { StepTwo } from "./steps/StepTwo";
 import { stepperSchema } from "../../schemas/stepperSchema";
-
-const steps = ["stepOne", "stepTwo"] as const;
+import { steps, Steps } from "./constants";
 
 const Stepper = () => {
   const [activeStep, setActiveStep] = useState(0);
 
   const form = useAppForm({
     defaultValues: {
-      stepOne: { phone: "", fullName: "" },
-      stepTwo: { email: "", zip: "" },
+      [Steps.stepOne]: { phone: "", fullName: "" },
+      [Steps.stepTwo]: { email: "", zip: "" },
     },
     validators: { onChange: stepperSchema },
     onSubmit: ({ value }) => {
@@ -27,19 +28,20 @@ const Stepper = () => {
     },
   });
 
-  const currentStepKey = steps[activeStep];
+  const isFirstStep = activeStep === 0;
+  const isLastStep = activeStep === steps.length - 1;
 
   const handleNext = () => {
-    if (activeStep < steps.length - 1) {
-      setActiveStep((prev) => prev + 1);
-    }
+    if (isLastStep) return;
+    setActiveStep((prev) => prev + 1);
   };
 
   const handleBack = () => {
-    if (activeStep > 0) {
-      setActiveStep((prev) => prev - 1);
-    }
+    if (isFirstStep) return;
+    setActiveStep((prev) => prev - 1);
   };
+
+  const currentStep = steps[activeStep];
 
   return (
     <form
@@ -49,18 +51,18 @@ const Stepper = () => {
       }}>
       <Box sx={{ width: "80%", mt: 4 }}>
         <MuiStepper activeStep={activeStep}>
-          {steps.map((step, index) => (
+          {steps.map((step) => (
             <Step key={step}>
-              <StepLabel>{`Step ${index + 1}`}</StepLabel>
+              <StepLabel>{step}</StepLabel>
             </Step>
           ))}
         </MuiStepper>
 
-        {currentStepKey === "stepOne" && (
-          <StepOne form={form} fields="stepOne" />
+        {currentStep === Steps.stepOne && (
+          <StepOne form={form} fields={Steps.stepOne} />
         )}
-        {currentStepKey === "stepTwo" && (
-          <StepTwo form={form} fields="stepTwo" />
+        {currentStep === Steps.stepTwo && (
+          <StepTwo form={form} fields={Steps.stepTwo} />
         )}
 
         <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
@@ -72,19 +74,17 @@ const Stepper = () => {
             Back
           </Button>
           <Box sx={{ flex: "1 1 auto" }} />
-          {activeStep < steps.length - 1 && (
-            <Button onClick={handleNext}>Next</Button>
-          )}
 
-          {activeStep === steps.length - 1 && (
-            <form.Subscribe selector={(state) => state.isSubmitting}>
-              {(isSubmitting) => (
-                <Button disabled={isSubmitting} type="submit">
-                  Submit
-                </Button>
-              )}
-            </form.Subscribe>
-          )}
+          <form.Subscribe selector={(state) => state.isSubmitting}>
+            {(isSubmitting) => (
+              <Button
+                onClick={!isLastStep ? handleNext : undefined}
+                type={isLastStep ? "submit" : "button"}
+                disabled={isLastStep && isSubmitting}>
+                {isLastStep ? "Submit" : "Next"}
+              </Button>
+            )}
+          </form.Subscribe>
         </Box>
       </Box>
     </form>
