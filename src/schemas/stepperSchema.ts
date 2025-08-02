@@ -25,4 +25,5 @@ export const stepTwoSchema = z.object({
 export const stepSchemas: Record<StepKey, z.ZodObject<any>> = {
   [Steps.stepOne]: stepOneSchema,
   [Steps.stepTwo]: stepTwoSchema,
+  [Steps.confirmation]: z.object({}),
 };

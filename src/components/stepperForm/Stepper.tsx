@@ -1,4 +1,4 @@
-import { useCallback, useState, type FC } from "react";
+import { useState, type FC } from "react";
 
 import {
   Box,
@@ -14,10 +14,12 @@ import { StepTwo } from "./steps/StepTwo";
 import { steps, Steps, type StepKey } from "./constants";
 import { defaultFormValues } from "./defaults";
 import { isStepValid, validateStep } from "./helpers";
+import ConfirmationStep from "./steps/ConfirmationStep";
 
 const stepComponents: Record<StepKey, FC<{ form: any; fields: StepKey }>> = {
   [Steps.stepOne]: StepOne,
   [Steps.stepTwo]: StepTwo,
+  [Steps.confirmation]: ConfirmationStep,
 };
 
 const Stepper = () => {
@@ -31,21 +33,27 @@ const Stepper = () => {
     },
     onSubmit: ({ value }) => {
       console.log("Submitted:", value);
+      setActiveStep((prev) => prev + 1);
     },
   });
 
-  const isFirstStep = activeStep === 0;
-  const isLastStep = activeStep === steps.length - 1;
+  const handleNext = () => {
+    setActiveStep((step) => step + 1);
+  };
 
-  const handleNext = useCallback(() => {
-    if (!isLastStep) setActiveStep((step) => step + 1);
-  }, [isLastStep]);
+  const handleBack = () => {
+    setActiveStep((step) => step - 1);
+  };
 
-  const handleBack = useCallback(() => {
-    if (!isFirstStep) setActiveStep((step) => step - 1);
-  }, [isFirstStep]);
+  const resetStepper = () => {
+    setActiveStep(0);
+    form.reset();
+  };
 
   const StepComponent = stepComponents[currentStep];
+
+  const isLastStep = activeStep === steps.length - 1;
+  const isConfirmationStep = currentStep === Steps.confirmation;
 
   return (
     <form
@@ -72,34 +80,52 @@ const Stepper = () => {
           ))}
         </MuiStepper>
 
-        <StepComponent form={form} fields={currentStep} />
-
+        {isConfirmationStep ? (
+          <ConfirmationStep />
+        ) : (
+          <StepComponent form={form} fields={currentStep} />
+        )}
         <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
-          <Button
-            variant="outlined"
-            color="inherit"
-            disabled={activeStep === 0}
-            onClick={handleBack}>
-            Back
-          </Button>
+          {isConfirmationStep && (
+            <Button variant="contained" onClick={resetStepper}>
+              Reset
+            </Button>
+          )}
 
-          <form.Subscribe selector={(state) => ({ values: state.values })}>
-            {({ values }) => {
-              const isValid = isStepValid(currentStep, values);
+          {!isConfirmationStep && (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                width: "100%",
+              }}>
+              <Button
+                variant="outlined"
+                color="inherit"
+                disabled={activeStep === 0}
+                onClick={handleBack}>
+                Back
+              </Button>
 
-              return (
-                <Button
-                  variant="contained"
-                  onClick={!isLastStep ? handleNext : undefined}
-                  type={isLastStep ? "submit" : "button"}
-                  disabled={
-                    (isLastStep && form.state.isSubmitting) || !isValid
-                  }>
-                  {isLastStep ? "Submit" : "Next"}
-                </Button>
-              );
-            }}
-          </form.Subscribe>
+              <form.Subscribe selector={(state) => ({ values: state.values })}>
+                {({ values }) => {
+                  const isValid = isStepValid(currentStep, values);
+
+                  return (
+                    <Button
+                      variant="contained"
+                      onClick={!isLastStep ? handleNext : undefined}
+                      type={isLastStep ? "submit" : "button"}
+                      disabled={
+                        (isLastStep && form.state.isSubmitting) || !isValid
+                      }>
+                      {isLastStep ? "Submit" : "Next"}
+                    </Button>
+                  );
+                }}
+              </form.Subscribe>
+            </Box>
+          )}
         </Box>
       </Box>
     </form>
