@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { Steps } from "../components/stepperForm/constants";
+import { Steps, type StepKey } from "../components/stepperForm/constants";
 
 export const stepOneSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
@@ -12,9 +12,9 @@ export const stepTwoSchema = z.object({
   zip: z.string().min(2, "ZIP code must be25 digits"),
 });
 
-export const stepperSchema = z.object({
+export const stepSchemas: Record<StepKey, z.ZodType<any>> = {
   [Steps.stepOne]: stepOneSchema,
   [Steps.stepTwo]: stepTwoSchema,
-});
+};
 
-export type StepperValues = z.infer<typeof stepperSchema>;
+export type StepperValues = z.infer<typeof stepSchemas>;

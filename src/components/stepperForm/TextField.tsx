@@ -7,6 +7,9 @@ const TextField = ({ label }: { label: string }) => {
   const field = useFieldContext<string>();
 
   const errors = useStore(field.store, (state) => state.meta.errors);
+  const isDirty = useStore(field.store, (state) => state.meta.isDirty);
+
+  const shouldShowError = isDirty && errors.length > 0;
 
   return (
     <MuiTextField
@@ -14,9 +17,9 @@ const TextField = ({ label }: { label: string }) => {
       value={field.state.value}
       onChange={(e) => field.handleChange(e.target.value)}
       onBlur={field.handleBlur}
-      error={errors.length > 0}
-      helperText={errors.join(", ")}
       fullWidth
+      error={shouldShowError}
+      helperText={shouldShowError ? errors.join(", ") : " "}
     />
   );
 };

@@ -11,18 +11,26 @@ import {
 import { useAppForm } from "../../hooks/form";
 import { StepOne } from "./steps/StepOne";
 import { StepTwo } from "./steps/StepTwo";
-import { stepperSchema } from "../../schemas/stepperSchema";
-import { steps, Steps } from "./constants";
+import {
+  stepOneSchema,
+  stepSchemas,
+  stepTwoSchema,
+} from "../../schemas/stepperSchema";
+import { steps, Steps, type StepKey } from "./constants";
+import type z from "zod";
 
 const Stepper = () => {
   const [activeStep, setActiveStep] = useState(0);
+  const currentStep = steps[activeStep];
 
   const form = useAppForm({
     defaultValues: {
       [Steps.stepOne]: { phone: "", fullName: "" },
       [Steps.stepTwo]: { email: "", zip: "" },
     },
-    validators: { onChange: stepperSchema },
+    validators: {
+      onChange: ({ value }) => validateStep(currentStep, value),
+    },
     onSubmit: ({ value }) => {
       console.log("Submitted:", value);
     },
@@ -38,10 +46,9 @@ const Stepper = () => {
 
   const handleBack = () => {
     if (isFirstStep) return;
+
     setActiveStep((prev) => prev - 1);
   };
-
-  const currentStep = steps[activeStep];
 
   return (
     <form
@@ -75,20 +82,59 @@ const Stepper = () => {
           </Button>
           <Box sx={{ flex: "1 1 auto" }} />
 
-          <form.Subscribe selector={(state) => state.isSubmitting}>
-            {(isSubmitting) => (
-              <Button
-                onClick={!isLastStep ? handleNext : undefined}
-                type={isLastStep ? "submit" : "button"}
-                disabled={isLastStep && isSubmitting}>
-                {isLastStep ? "Submit" : "Next"}
-              </Button>
-            )}
+          <form.Subscribe selector={(state) => ({ values: state.values })}>
+            {({ values }) => {
+              const isValid = isStepValid(currentStep, values);
+
+              return (
+                <Button
+                  onClick={!isLastStep ? handleNext : undefined}
+                  type={isLastStep ? "submit" : "button"}
+                  disabled={
+                    (isLastStep && form.state.isSubmitting) || !isValid
+                  }>
+                  {isLastStep ? "Submit" : "Next"}
+                </Button>
+              );
+            }}
           </form.Subscribe>
         </Box>
       </Box>
     </form>
   );
 };
+
+type FormValues = {
+  [Steps.stepOne]: z.infer<typeof stepOneSchema>;
+  [Steps.stepTwo]: z.infer<typeof stepTwoSchema>;
+};
+
+type ValidationError = {
+  fields: Record<string, string>;
+};
+
+const validateStep = (
+  stepKey: StepKey,
+  value: FormValues,
+): ValidationError | null => {
+  const stepData = value[stepKey];
+  const result = stepSchemas[stepKey].safeParse(stepData);
+
+  if (result.success) return null;
+
+  const errors: ValidationError = { fields: {} };
+
+  for (const issue of result.error.issues) {
+    const path = issue.path.join(".");
+    errors.fields[`${stepKey}.${path}`] = issue.message;
+  }
+
+  return errors;
+};
+
+function isStepValid(step: keyof typeof stepSchemas, values: any) {
+  const result = stepSchemas[step].safeParse(values[step]);
+  return result.success;
+}
 
 export default Stepper;
