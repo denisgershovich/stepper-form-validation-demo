@@ -80,11 +80,8 @@ const Stepper = () => {
           ))}
         </MuiStepper>
 
-        {isConfirmationStep ? (
-          <ConfirmationStep />
-        ) : (
-          <StepComponent form={form} fields={currentStep} />
-        )}
+        <StepComponent form={form} fields={currentStep} />
+
         <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
           {isConfirmationStep && (
             <Button variant="contained" onClick={resetStepper}>
