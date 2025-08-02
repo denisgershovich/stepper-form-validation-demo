@@ -4,17 +4,25 @@ import { Steps, type StepKey } from "../components/stepperForm/constants";
 
 export const stepOneSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
-  phone: z.string().min(2, "Phone must be at least 2 digits"),
+  phone: z
+    .string()
+    .min(7, "Phone number must be at least 7 digits")
+    .refine((val) => /^\d+$/.test(val), {
+      message: "Phone must contain only numbers",
+    }),
 });
 
 export const stepTwoSchema = z.object({
-  email: z.string().min(2, "email name is required"),
-  zip: z.string().min(2, "ZIP code must be25 digits"),
+  email: z.string().email("Invalid email address"),
+  zip: z
+    .string()
+    .min(5, "ZIP code must be at least 5 digits")
+    .refine((val) => /^\d{5,}$/.test(val), {
+      message: "ZIP must contain only digits",
+    }),
 });
 
-export const stepSchemas: Record<StepKey, z.ZodType<any>> = {
+export const stepSchemas: Record<StepKey, z.ZodObject<any>> = {
   [Steps.stepOne]: stepOneSchema,
   [Steps.stepTwo]: stepTwoSchema,
 };
-
-export type StepperValues = z.infer<typeof stepSchemas>;

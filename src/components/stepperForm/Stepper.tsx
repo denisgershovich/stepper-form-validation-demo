@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState, type FC } from "react";
 
 import {
   Box,
@@ -11,23 +11,21 @@ import {
 import { useAppForm } from "../../hooks/form";
 import { StepOne } from "./steps/StepOne";
 import { StepTwo } from "./steps/StepTwo";
-import {
-  stepOneSchema,
-  stepSchemas,
-  stepTwoSchema,
-} from "../../schemas/stepperSchema";
 import { steps, Steps, type StepKey } from "./constants";
-import type z from "zod";
+import { defaultFormValues } from "./defaults";
+import { isStepValid, validateStep } from "./helpers";
+
+const stepComponents: Record<StepKey, FC<{ form: any; fields: StepKey }>> = {
+  [Steps.stepOne]: StepOne,
+  [Steps.stepTwo]: StepTwo,
+};
 
 const Stepper = () => {
   const [activeStep, setActiveStep] = useState(0);
   const currentStep = steps[activeStep];
 
   const form = useAppForm({
-    defaultValues: {
-      [Steps.stepOne]: { phone: "", fullName: "" },
-      [Steps.stepTwo]: { email: "", zip: "" },
-    },
+    defaultValues: defaultFormValues,
     validators: {
       onChange: ({ value }) => validateStep(currentStep, value),
     },
@@ -39,25 +37,34 @@ const Stepper = () => {
   const isFirstStep = activeStep === 0;
   const isLastStep = activeStep === steps.length - 1;
 
-  const handleNext = () => {
-    if (isLastStep) return;
-    setActiveStep((prev) => prev + 1);
-  };
+  const handleNext = useCallback(() => {
+    if (!isLastStep) setActiveStep((step) => step + 1);
+  }, [isLastStep]);
 
-  const handleBack = () => {
-    if (isFirstStep) return;
+  const handleBack = useCallback(() => {
+    if (!isFirstStep) setActiveStep((step) => step - 1);
+  }, [isFirstStep]);
 
-    setActiveStep((prev) => prev - 1);
-  };
+  const StepComponent = stepComponents[currentStep];
 
   return (
     <form
-      onSubmit={(e) => {
-        e.preventDefault();
+      onSubmit={(event) => {
+        event.preventDefault();
         form.handleSubmit();
-      }}>
-      <Box sx={{ width: "80%", mt: 4 }}>
-        <MuiStepper activeStep={activeStep}>
+      }}
+      style={{ width: "100%", maxWidth: 600 }}>
+      <Box
+        sx={{
+          bgcolor: "white",
+          borderRadius: 2,
+          boxShadow: 3,
+          p: 4,
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+        }}>
+        <MuiStepper activeStep={activeStep} alternativeLabel>
           {steps.map((step) => (
             <Step key={step}>
               <StepLabel>{step}</StepLabel>
@@ -65,22 +72,16 @@ const Stepper = () => {
           ))}
         </MuiStepper>
 
-        {currentStep === Steps.stepOne && (
-          <StepOne form={form} fields={Steps.stepOne} />
-        )}
-        {currentStep === Steps.stepTwo && (
-          <StepTwo form={form} fields={Steps.stepTwo} />
-        )}
+        <StepComponent form={form} fields={currentStep} />
 
-        <Box sx={{ display: "flex", flexDirection: "row", pt: 2 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
           <Button
+            variant="outlined"
             color="inherit"
             disabled={activeStep === 0}
-            onClick={handleBack}
-            sx={{ mr: 1 }}>
+            onClick={handleBack}>
             Back
           </Button>
-          <Box sx={{ flex: "1 1 auto" }} />
 
           <form.Subscribe selector={(state) => ({ values: state.values })}>
             {({ values }) => {
@@ -88,6 +89,7 @@ const Stepper = () => {
 
               return (
                 <Button
+                  variant="contained"
                   onClick={!isLastStep ? handleNext : undefined}
                   type={isLastStep ? "submit" : "button"}
                   disabled={
@@ -103,38 +105,5 @@ const Stepper = () => {
     </form>
   );
 };
-
-type FormValues = {
-  [Steps.stepOne]: z.infer<typeof stepOneSchema>;
-  [Steps.stepTwo]: z.infer<typeof stepTwoSchema>;
-};
-
-type ValidationError = {
-  fields: Record<string, string>;
-};
-
-const validateStep = (
-  stepKey: StepKey,
-  value: FormValues,
-): ValidationError | null => {
-  const stepData = value[stepKey];
-  const result = stepSchemas[stepKey].safeParse(stepData);
-
-  if (result.success) return null;
-
-  const errors: ValidationError = { fields: {} };
-
-  for (const issue of result.error.issues) {
-    const path = issue.path.join(".");
-    errors.fields[`${stepKey}.${path}`] = issue.message;
-  }
-
-  return errors;
-};
-
-function isStepValid(step: keyof typeof stepSchemas, values: any) {
-  const result = stepSchemas[step].safeParse(values[step]);
-  return result.success;
-}
 
 export default Stepper;

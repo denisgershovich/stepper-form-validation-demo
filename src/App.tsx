@@ -5,10 +5,13 @@ function App() {
   return (
     <Box
       sx={{
-        width: "100%",
+        width: "100vw",
+        height: "100vh",
         display: "flex",
         justifyContent: "center",
-        height: "100%",
+        alignItems: "center",
+        bgcolor: "#f5f5f5",
+        p: 2,
       }}>
       <Stepper />
     </Box>

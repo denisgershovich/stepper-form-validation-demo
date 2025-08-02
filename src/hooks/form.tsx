@@ -6,7 +6,7 @@ import { fieldContext, formContext } from "./form-context";
 
 const TextField = lazy(() => import("../components/stepperForm/TextField"));
 
-export const { useAppForm, withForm, withFieldGroup } = createFormHook({
+export const { useAppForm, withFieldGroup } = createFormHook({
   fieldComponents: {
     TextField,
   },

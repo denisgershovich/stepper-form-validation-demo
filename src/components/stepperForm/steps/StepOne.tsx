@@ -1,10 +1,6 @@
 import { withFieldGroup } from "../../../hooks/form";
 
 export const StepOne = withFieldGroup({
-  defaultValues: {
-    phone: "",
-    fullName: "",
-  },
   render: function Render({ group }) {
     return (
       <>
