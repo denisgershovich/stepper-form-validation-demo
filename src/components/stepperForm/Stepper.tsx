@@ -15,10 +15,12 @@ import { steps, Steps, type StepKey } from "./constants";
 import { defaultFormValues } from "./defaults";
 import { isStepValid, validateStep } from "./helpers";
 import ConfirmationStep from "./steps/ConfirmationStep";
+import { StepThree } from "./steps/stepThree";
 
 const stepComponents: Record<StepKey, FC<{ form: any; fields: StepKey }>> = {
   [Steps.stepOne]: StepOne,
   [Steps.stepTwo]: StepTwo,
+  [Steps.StepThree]: StepThree,
   [Steps.confirmation]: ConfirmationStep,
 };
 
@@ -31,8 +33,7 @@ const Stepper = () => {
     validators: {
       onChange: ({ value }) => validateStep(currentStep, value),
     },
-    onSubmit: ({ value }) => {
-      console.log("Submitted:", value);
+    onSubmit: () => {
       setActiveStep((prev) => prev + 1);
     },
   });

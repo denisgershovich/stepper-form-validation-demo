@@ -22,8 +22,16 @@ export const stepTwoSchema = z.object({
     }),
 });
 
+export const stepThreeSchema = z.object({
+  file: z
+    .instanceof(File)
+    .nullable()
+    .refine((file) => file !== null, { message: "File is required" }),
+});
+
 export const stepSchemas: Record<StepKey, z.ZodObject<any>> = {
   [Steps.stepOne]: stepOneSchema,
   [Steps.stepTwo]: stepTwoSchema,
+  [Steps.StepThree]: stepThreeSchema,
   [Steps.confirmation]: z.object({}),
 };
